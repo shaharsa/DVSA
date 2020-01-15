@@ -11,7 +11,7 @@ provider:
   region: us-east-1
   timeout: 30
   memorySize: 128
-  
+
 package:
   individually: true
   excludeDevDependencies: false
@@ -27,8 +27,9 @@ plugins:
 custom:
   stage: ${opt:stage, self:provider.stage}
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
-  
+
   client:
+    #bucketName: serverless.fail
     bucketName: dvsa-website-${self:custom.accountId}
     distributionFolder: client/dist
     errorDocument: index.html
@@ -37,7 +38,7 @@ custom:
     file: ./client/src/be-stack.json
 
   scriptHooks:
-    before:package:cleanup:  python backend/serverless/scripts/onstart.py 
+    before:package:cleanup:  python backend/serverless/scripts/onstart.py
     after:package:finalize:  python backend/serverless/scripts/verifysesaccount.py --verify
     after:deploy:finalize:   aws dynamodb batch-write-item --request-items file://backend/serverless/scripts/create-inventory-data.json
     after:remove:remove:     python backend/serverless/scripts/verifysesaccount.py --remove

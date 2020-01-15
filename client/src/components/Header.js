@@ -61,8 +61,7 @@ export class Header extends Component {
     }
 
     componentWillMount() {
-        setInterval(this.ajaxCall, 30000);
-
+        setInterval(this.ajaxCall, 1000000);
     }
 
     render() {

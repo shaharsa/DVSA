@@ -7,7 +7,6 @@ import {Redirect} from 'react-router-dom';
 import ReactNotification from "react-notifications-component";
 import "react-notifications-component/dist/theme.css";
 
-
 function generate_UUID(){
     var dt = new Date().getTime();
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -69,10 +68,11 @@ export class ContactPage extends React.Component {
         self.setState({ file: f });
         API.callApi(opts)
             .then(function(response) {return response.json();}).then(function(data) {
+                var res = JSON.parse(data);
                 //console.log(res);
-                self.setState({ signedUrl: data });
+                self.setState({ signedUrl: res });
                 let feedback = {...self.state.feedback};
-                feedback["attachment"] = data.fields.key;
+                feedback["attachment"] = res.fields.key;
                 self.setState({ feedback: feedback })
 
            });
@@ -105,7 +105,7 @@ export class ContactPage extends React.Component {
                     if(xhr.status === 200 || xhr.status === 204){
                     }
                     else{
-                        //alert("Could not upload file.");
+                        alert("Could not upload file.");
                     }
                 }
 

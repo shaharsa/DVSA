@@ -7,6 +7,7 @@ import onClickOutside from "react-onclickoutside";
 export class SideBar extends Component {
     constructor(props){
         super(props);
+        this.onClickAdmin = this.onClickAdmin.bind(this);
     }
 
   state = { visible: false }
@@ -20,6 +21,25 @@ export class SideBar extends Component {
   handleClickOutside = () => {
     if(this.state.visible){
         this.toggleVisibility();
+    }
+  };
+
+  onClickAdmin(e) {
+    var isAdmin = JSON.parse(localStorage.getItem("AccountData"))["isAdmin"];
+    if (!isAdmin) {
+        e.preventDefault();
+        alert("You are not an administrator.");
+        return false
+    }
+    else {
+            let opts = {
+                'action': 'profile',
+                'data': this.state.profile
+            };
+            API.callApi(opts)
+                .then(function(response) {
+                    return response.json();
+                }).then(function(data) {});
     }
   };
 
@@ -51,7 +71,6 @@ export class SideBar extends Component {
                     <br/>Info
                 </Menu.Item>
               </Link>
-
               <Link to='/store'>
                   <Menu.Item name='home'>
                     <Icon name='home' />
@@ -87,12 +106,12 @@ export class SideBar extends Component {
                   </Menu.Item>
                 </Link>
 
-                <Link to='/admin'>
+                    <Link to='/admin' onClick={this.onClickAdmin}>
                   <Menu.Item name='admin'>
                     <a> <img src="/images/iconadmin.png" width="28px"/></a>
                     <br/>Admin
                   </Menu.Item>
-                </Link>
+               </Link>
 
                     <Menu.Item name='lessons'>
                       <a href="https://github.com/OWASP/DVSA/blob/master/AWS/LESSONS/"> <img src="/images/iconlessons.png" width="32px"/></a>
@@ -105,4 +124,3 @@ export class SideBar extends Component {
   }
 }
 export default onClickOutside(SideBar);
-

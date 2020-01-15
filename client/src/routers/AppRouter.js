@@ -17,7 +17,6 @@ import OrdersPage from '../components/OrdersPage'
 import { withAuthenticator } from 'aws-amplify-react';
 import OrderView from '../components/OrderView';
 import InfoPage from '../components/InfoPage';
-import MgmtPage from '../components/MgmtPage';
 import AdminPage from '../components/AdminPage';
 import ContactPage from '../components/ContactPage';
 import ProfilePage from '../components/ProfilePage';
@@ -49,8 +48,6 @@ export class AppRouter extends React.Component {
                     <Switch>
                         <Route path='/' component={StorePage} exact={true}/>
                         <Route path='/info' component={InfoPage} exact={true}/>
-                        <Route path='/mgmt' component={MgmtPage} exact={true}/>
-                        <Route path='/admin' component={AdminPage} exact={true}/>
                         <Route path='/contact' component={ContactPage} exact={true}/>
                         <Route path='/store' component={StorePage} exact={true}/>
                         <Route path='/store/:id' component={ProductView} />
@@ -60,6 +57,7 @@ export class AppRouter extends React.Component {
                         <Route path='/confirmation' component={ConfirmationPage} exact={true}/>
                         <Route path='/orders' component={OrdersPage} exact={true}/>
                         <Route path='/profile' component={ProfilePage} exact={true}/>
+                        <Route path='/admin' component={AdminPage} exact={true}/>
                         <Route path='/orders/:id' component={OrderView} />
                         <Route path='/inbox' component={InboxPage} exact={true}/>
                         <Route path='/inbox/:id' component={MessageView} />
