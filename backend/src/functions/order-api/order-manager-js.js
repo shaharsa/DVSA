@@ -3,7 +3,7 @@ var AWS = require('aws-sdk');
 var jose = require('node-jose');
 
 exports.handler = async (event, context, callback) => {
-    //console.log(JSON.stringify(event));
+    console.log(JSON.stringify(event));
     var req = serialize.unserialize(event.body);
     var headers = serialize.unserialize(event.headers);
     var auth_header = headers.Authorization || headers.authorization;
@@ -131,7 +131,6 @@ exports.handler = async (event, context, callback) => {
         }
 
         if (isOk == true) {
-
             var lambda = new AWS.Lambda();
             var params = {
               FunctionName: functionName,

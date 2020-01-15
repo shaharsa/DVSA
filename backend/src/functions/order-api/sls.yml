@@ -14,7 +14,7 @@ functions:
     memorySize: 128
     environment:
       userpoolid:
-        - Ref: CognitoUserPoolMyUserPool
+        Ref: CognitoUserPoolMyUserPool
     events:
     - http:
         path: order
@@ -65,4 +65,3 @@ resources:
                     - lambda:InvokeFunction
                     - lambda:InvokeAsync
                   Resource: {'Fn::Join': [':', ['arn:aws:lambda', {Ref: 'AWS::Region'}, {Ref: 'AWS::AccountId'}, 'function:*']]}
-
