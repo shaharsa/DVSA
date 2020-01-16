@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i",
-    "client:build": "cd client && npm run-script build",
+    "client:build": "cd client && rm -rf node_modules/graphql/*.mjs && npm run-script build",
     "client:start": "cd client && npm start",
     "client:start:local": "cd client && npm run-script start:local",
     "start": "serverless offline",
@@ -33,6 +33,8 @@
     "serverless-stack-output": "0.2.3"
   },
   "dependencies": {
+    "aws-amplify": "^2.2.2",
+    "graphql": "^14.5.8",
     "serverless-offline": "^4.3.0"
   }
 }
