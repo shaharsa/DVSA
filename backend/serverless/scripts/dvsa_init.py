@@ -263,7 +263,7 @@ def verifySes(email):
 # remove all dvsa-created email addresses (dvsa.<XXX>@mailsac.com)
 def removeIdentities():
     ses = boto3.client('ses')
-    print("Getting SES identities..."),
+    print("Getting SES identities...", end="")
     identities = ses.list_identities(
         IdentityType='EmailAddress'
     )

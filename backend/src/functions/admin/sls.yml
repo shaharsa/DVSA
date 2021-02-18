@@ -8,8 +8,7 @@ functions:
   AdminGetOrders:
     name: DVSA-ADMIN-GET-ORDERS
     handler: backend/src/functions/admin/admin_get_orders.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
     timeout: 10
@@ -21,8 +20,7 @@ functions:
   AdminGetReceipt:
     name: DVSA-ADMIN-GET-RECEIPT
     handler: backend/src/functions/admin/admin_get_receipts.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       RECEIPTS_BUCKET: !Sub dvsa-receipts-bucket-${AWS::AccountId}
     timeout: 10
@@ -34,8 +32,7 @@ functions:
   AdminUpdateOrders:
     name: DVSA-ADMIN-UPDATE-ORDERS
     handler: backend/src/functions/admin/admin_update_orders.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
     timeout: 10
@@ -47,8 +44,7 @@ functions:
   AdminUpdateInventory:
     name: DVSA-ADMIN-UPDATE-INVENTORY
     handler: backend/src/functions/admin/admin_update_inventory.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       INVENTORY_TABLE: DVSA-INVENTORY-DB
     timeout: 10
@@ -60,8 +56,7 @@ functions:
   AdminTweet:
     name: DVSA-ADMIN-TWEET
     handler: backend/src/functions/admin/admin_tweet.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       TWITTER_ACCESS_TOKEN: zzzzzzzzzzzzzzzzzzzzzzz
       TWITTER_API: https://api.twitter.com/
@@ -75,8 +70,7 @@ functions:
   AdminShell:
     name: DVSA-ADMIN-SHELL
     handler: backend/src/functions/admin/admin_shell.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     events:
       - http:
           method: post
@@ -99,8 +93,7 @@ functions:
           method: post
           path: orders
     handler: backend/src/functions/admin/admin_orders_mysql.handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaAdminRole
     environment:
       db_name: bvl1zuoffpflrto3zdrt
       db_pw: lQ8PQBkxAqFFCizNI5vt
@@ -108,6 +101,25 @@ functions:
       db_user: uk7kkjxwjxurqudy
     timeout: 30
     memorySize: 256
-    package: 
+    package:
       include: 
         - backend/src/functions/admin/admin_orders_mysql.js
+
+resources:
+  Resources:
+    dvsaAdminRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: dvsaAdminRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+          - arn:aws:iam::aws:policy/AmazonEC2RoleforDataPipelineRole
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole

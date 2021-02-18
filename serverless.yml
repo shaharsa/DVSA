@@ -10,6 +10,8 @@ provider:
   versionFunctions: false
   timeout: 30
   memorySize: 128
+  apiGateway: 
+    shouldStartNameWithService: true
   
 package:
   individually: true
@@ -22,6 +24,7 @@ plugins:
   - serverless-offline
   - serverless-stack-output
   - serverless-scriptable-plugin
+  - serverless-attach-managed-policy
 custom:
   stage: dvsa
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
@@ -59,3 +62,7 @@ resources:
   # Function Resources
   - ${file(backend/src/functions/order-api/sls.yml):resources}
   - ${file(backend/src/functions/processing/sls.yml):resources}
+  - ${file(backend/src/functions/order/sls.yml):resources}
+  - ${file(backend/src/functions/admin/sls.yml):resources}
+  - ${file(backend/src/functions/user/sls.yml):resources}
+  - ${file(backend/src/functions/cronjobs/sls.yml):resources}

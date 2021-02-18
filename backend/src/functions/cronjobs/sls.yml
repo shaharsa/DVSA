@@ -8,8 +8,7 @@ functions:
   CronProcessor:
     name: DVSA-CRON-PROCESSOR
     handler: backend/src/functions/cronjobs/cron_processor.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaCronJobRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
     timeout: 30
@@ -27,8 +26,7 @@ functions:
   CronOrderCleaner:
     name: DVSA-CRON-ORDER-CLEANER
     handler: backend/src/functions/cronjobs/cron_cleaner.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaCronJobRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
     timeout: 30
@@ -46,8 +44,7 @@ functions:
   CronJobUpdate:
     name: DVSA-CRON-JOB-UPDATE
     handler: backend/src/functions/cronjobs/cron_update.lambda_handler
-    policies:
-        - AWSLambdaFullAccess
+    role: dvsaCronJobRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
     timeout: 30
@@ -62,4 +59,21 @@ functions:
         rate: rate(1 day)
         enabled: true
 
-
+resources:
+  Resources:
+    dvsaCronJobRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: dvsaCronJobRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+          - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
