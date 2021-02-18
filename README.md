@@ -35,23 +35,21 @@ We do not take responsibility for the way in which any one uses this application
 ![](https://i.imgur.com/ZfjEyiM.png)
 #### [Serverless Framework](AWS/VIDEOS/serverless_deploy.mp4)
 
+##### prerequisites
+- nodejs
+- python3
+- aws-cli `pip3 install awscli --upgrade --user`
+- Serverless `npm install -g serverless`
+
 You must run serverless deploy commands with an environment variable profile (e.g. `AWS_PROFILE=<aws-profile-name>`) instead of the serverless argument.
 
 ##### Clone Project
 - `git clone git@github.com:OWASP/DVSA.git`
 
-##### Install Serverless
-- `npm install -g serverless`
+##### Install npm's python dependencies
+- `pip3 install requests --user`
 
-##### Install AWS-CLI
-- `pip install awscli --upgrade --user`
-
-##### Verify AWS-CLI Installation
-- `aws --version`
-
-If you get a "command not found" error, see the "Steps to Take after Installation" section [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html#install-tool-pip).
-
-##### Configure AWS-CLI for your Account
+##### Configure AWS-CLI for your Account. Make sure the default region matches the region in `serverless.yml`
 - `aws configure`
 
 ##### Install dependencies

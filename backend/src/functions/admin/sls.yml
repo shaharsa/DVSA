@@ -121,5 +121,5 @@ resources:
               Action: sts:AssumeRole
         ManagedPolicyArns:
           - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
-          - arn:aws:iam::aws:policy/AmazonEC2RoleforDataPipelineRole
+          - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforDataPipelineRole
           - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
