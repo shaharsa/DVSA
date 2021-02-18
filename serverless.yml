@@ -22,7 +22,6 @@ plugins:
   - serverless-offline
   - serverless-stack-output
   - serverless-scriptable-plugin
-
 custom:
   stage: dvsa
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
@@ -36,10 +35,10 @@ custom:
     file: ./client/src/be-stack.json
 
   scriptHooks:
-    before:package:cleanup:  python backend/serverless/scripts/onstart.py 
-    after:package:finalize:  python backend/serverless/scripts/verifysesaccount.py --verify
+    before:package:cleanup:  python3 backend/serverless/scripts/onstart.py 
+    after:package:finalize:  python3 backend/serverless/scripts/verifysesaccount.py --verify
     after:deploy:finalize:   aws dynamodb batch-write-item --request-items file://backend/serverless/scripts/create-inventory-data.json
-    after:remove:remove:     python backend/serverless/scripts/verifysesaccount.py --remove
+    after:remove:remove:     python3 backend/serverless/scripts/verifysesaccount.py --remove
 
 functions:
   - ${file(backend/src/functions/order-api/sls.yml):functions}
@@ -56,7 +55,6 @@ resources:
   - ${file(backend/serverless/resources/api-gateway.yml)}
   - ${file(backend/serverless/resources/dynamodb-tables.yml)}
   - ${file(backend/serverless/resources/s3-buckets.yml)}
-  - ${file(backend/serverless/resources/function-roles.yml)}
 
   # Function Resources
   - ${file(backend/src/functions/order-api/sls.yml):resources}

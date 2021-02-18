@@ -15,7 +15,7 @@ functions:
     handler: backend/src/functions/processing/feedback_uploads.lambda_handler
     role: dvsaFeedbackRole
     environment:
-      FEEDBACK_BUCKET: {'Fn::Join': ['', ['dvsa-feedback-bucket-', {Ref: 'AWS::AccountId'}]]}
+      FEEDBACK_BUCKET: !Sub dvsa-feedback-bucket-${AWS::AccountId}
     timeout: 10
     memorySize: 128
     package:
@@ -23,22 +23,7 @@ functions:
         - backend/src/functions/processing/feedback_uploads.py
     events:
     - s3:
-        bucket: 'dvsa-receipts-bucket-${self:custom.accountId}'
-        existing: true
-        event: s3:ObjectCreated:*
-  
-  VerrifyKeyHash:
-    ame: DVSA-VERIFY-KEY-HASH
-    handler: backend/src/functions/processing/verify_key_hash.lambda_handler
-    role: dvsaFeedbackRole
-    timeout: 10
-    memorySize: 128
-    package:
-      include:
-        - backend/src/functions/processing/verify_key_hash.py
-    events:
-    - s3:
-        bucket: 'dvsa-receipts-bucket-${self:custom.accountId}'
+        bucket: 'dvsa-feedback-bucket-${self:custom.accountId}'
         existing: true
         event: s3:ObjectCreated:*
 
@@ -49,7 +34,7 @@ functions:
     environment:
       INVENTORY_TABLE: DVSA-INVENTORY-DB
       ORDERS_TABLE: DVSA-ORDERS-DB
-      RECEIPTS_BUCKET: {'Fn::Join': ['', ['dvsa-receipts-bucket-', {Ref: 'AWS::AccountId'}]]}
+      RECEIPTS_BUCKET: !Sub dvsa-receipts-bucket-${AWS::AccountId}
     timeout: 10
     memorySize: 128
     package:
@@ -107,7 +92,8 @@ functions:
     memorySize: 128
     events:
     - s3:
-        bucket: ReceiptsBucket
+        bucket: 'dvsa-receipts-bucket-${self:custom.accountId}'
+        existing: true
         event: s3:ObjectCreated:*
         rules:
         - suffix: .raw

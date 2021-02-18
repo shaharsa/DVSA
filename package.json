@@ -1,6 +1,6 @@
 {
   "name": "dvsa",
-  "version": "1.2.2",
+  "version": "2.0.1",
   "description": "DVSA - Damn Vulneravle SERVERLESSS Application",
   "main": "index.js",
   "scripts": {
@@ -27,11 +27,13 @@
   },
   "homepage": "https://github.com/owasp/DVSA#readme",
   "devDependencies": {
-    "serverless-finch": "2.6.0",
+    "serverless": "^2.25.1",
+    "serverless-finch": "^2.6.0",
+    "serverless-offline": "^6.8.0",
     "serverless-scriptable-plugin": "^0.8.0",
     "serverless-stack-output": "0.2.3"
   },
   "dependencies": {
-    "serverless-offline": "^4.3.0"
+    "fsevents": "^2.3.2"
   }
 }

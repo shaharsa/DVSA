@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
 `totalAmount` FLOAT NULL,
 `orderStatus` INT(3) NULL,
 `paymentTS` INT(13) NULL,
-`orderId` VARCHAR(32) NULL,
-`userId` VARCHAR(32) NULL,
+`orderId` VARCHAR(64) NULL,
+`userId` VARCHAR(64) NULL,
 `address` TEXT NULL,
 `confirmationToken` VARCHAR(15) NULL
 );

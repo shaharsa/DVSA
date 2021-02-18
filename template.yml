@@ -29,7 +29,7 @@ Parameters:
 
 Resources:
 
-  # API Gateway
+  # region API Gateway
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -206,8 +206,9 @@ Resources:
       Type: COGNITO_USER_POOLS
       ProviderARNs:
         - {"Fn::GetAtt": ['CognitoUserPoolMyUserPool', Arn]}
+  # endregion APIGW
 
-  # Cognito
+  # region Cognito
   CognitoUserPoolMyUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -328,14 +329,16 @@ Resources:
                   Ref: CognitoIdentityPool
               'ForAnyValue:StringLike':
                 'cognito-identity.amazonaws.com:amr': authenticated
+  # endregion Cognito
 
-  # SQS
+  # region SQS
   SQSQueue:
     Type: "AWS::SQS::Queue"
     Properties:
       QueueName: "dvsa-order-paid-sqs"
-
-  # DynamoDB
+  # endregion SQS
+  
+  # region DynamoDB
   OrdersTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -397,12 +400,13 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-
-  # S3
+  # endregion DDB
+  
+  # region S3
   S3ReceiptsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: {'Fn::Join': ['', ['dvsa-receipts-bucket-', {Ref: 'AWS::AccountId'}]]}
+      BucketName: !Sub dvsa-receipts-bucket-${AWS::AccountId}
       CorsConfiguration:
         CorsRules:
           -
@@ -421,7 +425,7 @@ Resources:
   S3FeedbackBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: {'Fn::Join': ['', ['dvsa-feedback-bucket-', {Ref: 'AWS::AccountId'}]]}
+      BucketName: !Sub dvsa-feedback-bucket-${AWS::AccountId}
       CorsConfiguration:
         CorsRules:
           -
@@ -467,7 +471,7 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: {'Fn::Join': ['', ['dvsa-website-', {Ref: 'AWS::AccountId'}]]}
+      BucketName: !Sub dvsa-website-${AWS::AccountId}
       WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
@@ -515,9 +519,9 @@ Resources:
                 - s3:*
               Effect: Allow
               Resource: {'Fn::Join': ['', ['arn:aws:s3:::dvsa-website-', {Ref: 'AWS::AccountId'}, '/*']]}
-
-
-  # functions
+  # endregion S3
+  
+  # region Lambda
 
   ## Order-API
   OrderManagerFunction:
@@ -541,7 +545,6 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: /order
             Method: POST
-  
   OrderManagerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -798,84 +801,21 @@ Resources:
       CodeUri: backend/src/functions/processing/feedback_uploads.py
       Environment:
         Variables:
-          FEEDBACK_BUCKET: !Ref dvsa-feedback-bucket-${AWS::AccountId}
+          FEEDBACK_BUCKET: !Sub dvsa-feedback-bucket-${AWS::AccountId}
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 30
       Policies:
-        - AmazonS3FullAccess
+        - AWSLambdaFullAccess
         - AmazonSESFullAccess
-        - CloudWatchFullAccess
-        - AmazonDynamoDBFullAccess
       Events:
         ReceiptUpload:
           Type: S3
           Properties:
             Bucket: !Ref S3FeedbackBucket
             Events: s3:ObjectCreated:*
-
-  VerifyKeyHashFunction:
-    Type: 'AWS::Serverless::Function'
-    Properties:
-      FunctionName: DVSA-VERIFY-KEY_HASH
-      Handler: verify_key_hash.lambda_handler
-      Runtime: python3.6
-      CodeUri: backend/src/functions/processing/verify_key_hash.py
-      Environment:
-        Variables:
-          FEEDBACK_BUCKET: !Sub dvsa-feedback-bucket-${AWS::AccountId}
-      MemorySize: 128
-      Timeout: 30
-      Role: !GetAtt FeedbackUploadRole.Arn
-      Events:
-        ReceiptUpload:
-          Type: S3
-          Properties:
-            Bucket: !Ref S3FeedbackBucket
-            Events: s3:ObjectCreated:*
-
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub DVSA-FeedbackUpload-Role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: !Sub DVSA-FeedbackUpload-RolePolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:*
-                  - dynamodb:*
-                  - s3:*
-                  - ses:*
-                Resource: "*"
 
   ## Crons
-  dvsaCronjobsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub DVSA-Cronjob-Role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - AmazonDynamoDBFullAccess
-        - CloudWatchFullAccess
-        - AWSLambdaFullAccess
-
   CronProcessorFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -888,7 +828,8 @@ Resources:
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt dvsaCronjobsRole.Arn
+      Policies:
+        - AWSLambdaFullAccess
       Events:
         Timer:
           Type: Schedule
@@ -907,7 +848,8 @@ Resources:
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt dvsaCronjobsRole.Arn
+      Policies:
+        - AWSLambdaFullAccess
       Events:
         Timer:
           Type: Schedule
@@ -926,7 +868,8 @@ Resources:
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt dvsaCronjobsRole.Arn
+      Policies:
+        - AWSLambdaFullAccess
       Events:
         Timer:
           Type: Schedule
@@ -1015,9 +958,6 @@ Resources:
                 - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - AmazonDynamoDBFullAccess
-        - AmazonS3FullAccess
-        - CloudWatchFullAccess
         - AWSLambdaFullAccess
         - AmazonAPIGatewayInvokeFullAccess
         - AmazonSESFullAccess
@@ -1104,15 +1044,16 @@ Resources:
         - backend/src/functions/admin/admin_orders_mysql.js
       Environment:
         Variables:
-          db_name: sql5393572
-          db_pw: db_admin
-          db_url: sql5.freemysqlhosting.net
-          db_user: sql5393572
+          db_name: bvl1zuoffpflrto3zdrt
+          db_pw: lQ8PQBkxAqFFCizNI5vt
+          db_url: bvl1zuoffpflrto3zdrt-mysql.services.clever-cloud.com
+          db_user: uk7kkjxwjxurqudy
       MemorySize: 128
       Timeout: 10
       Role: !GetAtt dvsaAdminRole.Arn
+  # endregion Lambda
 
-  ## Init Lambda (Custom Resource)
+  # region Custom-Resource
   InitLambdaFunction:
     Type: 'AWS::Serverless::Function'
     DeletionPolicy: Retain
@@ -1167,6 +1108,7 @@ Resources:
     Properties:
       ServiceToken:
          Fn::GetAtt: [ "InitLambdaFunction" , "Arn" ]
+  # endregion custom-resource
 
 Outputs:
   WebsiteURL:
