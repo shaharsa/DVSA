@@ -1,9 +1,3 @@
-provider:
-  name: aws
-  runtime: nodejs12.x
-  versionFunctions: false
-  stage: dev
-      
 functions:
   OrderManager:
     runtime: nodejs12.x
@@ -14,7 +8,7 @@ functions:
     memorySize: 128
     environment:
       userpoolid:
-        Ref: CognitoUserPoolMyUserPool
+        Ref: CognitoUserPoolDvsaUserPool
     events:
     - http:
         path: order

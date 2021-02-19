@@ -2,10 +2,8 @@ provider:
   name: aws
   runtime: python3.6
   versionFunctions: false
-  stage: dev
 
 custom:
-  stage: ${opt:stage, self:provider.stage}
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
 
 functions:
@@ -56,7 +54,7 @@ functions:
     memorySize: 128
     events:
     - http:
-        path: DVSA-PAYMENT-PROCESSOR
+        path: payment
         method: POST
         cors: true
     package:
@@ -74,7 +72,7 @@ functions:
     memorySize: 128
     events:
     - http:
-        path: DVSA-GET-CART-TOTAL
+        path: total
         method: POST
         cors: true
     package:
@@ -87,7 +85,7 @@ functions:
     role: dvsaCreateReceiptRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
-      SOURCE_EMAIL: dvsa.noreply@mailsac.com
+      SOURCE_EMAIL: dvsa.noreply@1secmail.com
     timeout: 10
     memorySize: 128
     events:

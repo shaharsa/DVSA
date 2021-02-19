@@ -23,9 +23,9 @@ Globals:
 
 Parameters:
   emailAddress:
-    Description: Your email to send and receive emails via SES (This will only work if you verified the address in SES, leave default to use mailsac.com)
+    Description: Your email to send and receive emails via SES (This will only work if you verified the address in SES, leave default to use 1secmail.com)
     Type: string
-    Default: dvsa.noreply@mailsac.com
+    Default: dvsa.noreply@1secmail.com
 
 Resources:
 
@@ -41,7 +41,7 @@ Resources:
       DefinitionBody:
         swagger: 2.0
         info:
-          title: DVSA-API-GW
+          title: DVSA-APIS
         schemes:
           - http
         basePath: '/'
@@ -205,14 +205,14 @@ Resources:
         Ref: ApiGatewayApi
       Type: COGNITO_USER_POOLS
       ProviderARNs:
-        - {"Fn::GetAtt": ['CognitoUserPoolMyUserPool', Arn]}
+        - {"Fn::GetAtt": ['CognitoUserPoolDvsaUserPool', Arn]}
   # endregion APIGW
 
   # region Cognito
-  CognitoUserPoolMyUserPool:
+  CognitoUserPoolDvsaUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub DVSA-USER-POOL
+      UserPoolName: dvsa-user-pool
       LambdaConfig:
         PostConfirmation: !GetAtt UserCreateFunction.Arn
       UsernameAttributes:
@@ -276,9 +276,9 @@ Resources:
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: !Sub DVSA-user-pool-client
+      ClientName: dvsa-user-pool-client
       UserPoolId:
-        Ref: CognitoUserPoolMyUserPool
+        Ref: CognitoUserPoolDvsaUserPool
       ExplicitAuthFlows:
         - ADMIN_NO_SRP_AUTH
       GenerateSecret: false
@@ -289,7 +289,7 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt UserCreateFunction.Arn
       Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolMyUserPool}'
+      SourceArn: !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolDvsaUserPool}'
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
@@ -300,7 +300,7 @@ Resources:
         - ClientId:
             Ref: CognitoUserPoolClient
           ProviderName:
-            Fn::GetAtt: [ "CognitoUserPoolMyUserPool", "ProviderName" ]
+            Fn::GetAtt: [ "CognitoUserPoolDvsaUserPool", "ProviderName" ]
 
   CognitoIdentityPoolRoles:
     Type: AWS::Cognito::IdentityPoolRoleAttachment
@@ -534,7 +534,7 @@ Resources:
       Environment:
         Variables:
           userpoolid:
-            Ref: CognitoUserPoolMyUserPool
+            Ref: CognitoUserPoolDvsaUserPool
       MemorySize: 128
       Timeout: 30
       Role: !GetAtt OrderManagerRole.Arn
@@ -1029,7 +1029,7 @@ Resources:
         - backend/src/functions/admin/jsonpickle
       Environment:
         Variables:
-          userpoolid: !Ref CognitoUserPoolMyUserPool
+          userpoolid: !Ref CognitoUserPoolDvsaUserPool
       MemorySize: 128
       Timeout: 10
       Role: !GetAtt dvsaAdminRole.Arn
@@ -1065,7 +1065,7 @@ Resources:
       Environment:
         Variables:
           USER_POOL_ID:
-            Ref: CognitoUserPoolMyUserPool
+            Ref: CognitoUserPoolDvsaUserPool
           USER_POOL_CLIENT_ID:
             Ref: CognitoUserPoolClient
           IDENTITY_POOL:

@@ -8,7 +8,7 @@ Damn Vulnerable Serverless Application (DVSA) is a deliberately vulnerable appli
 
 The aim of DVSA is to **practice some of the most common serverless vulnerabilities**, with a simple straightforward interface.
 
-Please note, there are **both documented and undocumented vulnerabilities** with this software. This is intentional. You are encouraged to try and discover as many issues as possible.
+Please note, there are both **documented & undocumented vulnerabilities** with this software. This is intentional. You are encouraged to try and discover as many issues as possible.
 
 
 
@@ -35,36 +35,24 @@ We do not take responsibility for the way in which any one uses this application
 ![](https://i.imgur.com/ZfjEyiM.png)
 #### [Serverless Framework](AWS/VIDEOS/serverless_deploy.mp4)
 
-##### prerequisites
-- nodejs
+##### Prerequisites
+- npm
 - python3
-- aws-cli `pip3 install awscli --upgrade --user`
 - Serverless `npm install -g serverless`
 
-You must run serverless deploy commands with an environment variable profile (e.g. `AWS_PROFILE=<aws-profile-name>`) instead of the serverless argument.
+##### Setting your AWS Account/Region
+If you don't want to run with your `default` aws profile/region, run thhe `sls` commands with `AWS_PROFILE=<aws-profile>`/`AWS_REGION=<aws-region>` or modify the `provider.profile`/`provider.region` inside the `serverless.yml` file
 
-##### Clone Project
-- `git clone git@github.com:OWASP/DVSA.git`
+##### Run
+`./deploy.sh`
+###### Or, Step-by-Step:
+- Install npm dependencies: `npm i`
+- Install pip dependencies: `pip3 install awscli boto3 --user --upgrade`
+- Deploy backend: `sls deploy`
+- Build client: `npm run-script client:build`
+- Deploy client `sls client deploy`
 
-##### Install npm's python dependencies
-- `pip3 install requests --user`
-
-##### Configure AWS-CLI for your Account. Make sure the default region matches the region in `serverless.yml`
-- `aws configure`
-
-##### Install dependencies
-- `npm i`
-
-##### Deploy Backend
-- `sls deploy`
-
-##### Build Client
-- `npm run-script client:build`
-
-##### Deploy Client
-- `sls client deploy`
-
-- - -
+- - - 
 ## Running locally
 
 #### Run Client
@@ -80,15 +68,10 @@ If you want to point your local client to your local backend, edit your `be-stac
 - - -
 ## Email subscription
 
-DVSA sends receipts in the email (which will help you in hacking it). You can use the built-in **Inbox** page within the application to get the emails and obtain the receipts.
+DVSA sends receipts in the email. You can use the built-in **Inbox** page within the application to get the emails and obtain the receipts. Each user will be automatically assigned an email from `1secmail.com` which will be automatically verified. Real emails will be sent to their account and will appear in the application Inbox page.
 
-**_Note_**: each user will be assigned an email from `mailsac.com` which will be automatically verified. Real emails will be sent to their account and will appear in the application Inbox page. All this is **transparent** to the user and the deployer).
-
-**_Note_**: to make the email verification script work your default AWS region has to be "US East (N. Virginia)", for example by setting `region = us-east-1` in your ~/.aws/config file
-
-**Alternatively**, if you want users to receive emails to their registered email account (e.g. gmail), use one of the followings:
-
-- Send an email verification link to email address, by running the following command (after clicking on the received link, emails will **also** be sent to their actual email address):
+If you want users to receive emails to their actual registered email account (e.g. gmail):
+- Send an email verification link to the desired email address, by running the following command (after clicking on the received link, emails will **also** be sent to their actual email address):
 
 `aws ses verify-email-identity --email-address <your_email>`
 

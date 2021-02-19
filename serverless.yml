@@ -7,6 +7,8 @@ provider:
   name: aws
   runtime: python3.6
   stage: ${env:USER}
+  profile: default
+  region: us-east-1
   versionFunctions: false
   timeout: 30
   memorySize: 128
@@ -25,9 +27,11 @@ plugins:
   - serverless-stack-output
   - serverless-scriptable-plugin
   - serverless-attach-managed-policy
+  - serverless-plugin-log-retention
+
 custom:
-  stage: dvsa
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
+  logRetentionInDays: 7
   
   client:
     bucketName: dvsa-website-${self:custom.accountId}
@@ -40,7 +44,7 @@ custom:
   scriptHooks:
     before:package:cleanup:  python3 backend/serverless/scripts/onstart.py 
     after:package:finalize:  python3 backend/serverless/scripts/verifysesaccount.py --verify
-    after:deploy:finalize:   aws dynamodb batch-write-item --request-items file://backend/serverless/scripts/create-inventory-data.json
+    after:deploy:finalize:   aws dynamodb batch-write-item --request-items file://backend/serverless/scripts/create-inventory-data.json --profile ${env:AWS_PROFILE, self:provider.profile} --region ${env:AWS_REGION, self:provider.region}  # python3 backend/serverless/scripts/finalize.py -- 
     after:remove:remove:     python3 backend/serverless/scripts/verifysesaccount.py --remove
 
 functions:

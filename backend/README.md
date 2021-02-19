@@ -45,7 +45,7 @@ YAML files of cloud resources to be deployed using the Serverless framework
 
 - **verifysesaccount.py**: 
 
-A script to verify the dvsa.noreply@mailsac.com email for the account. This is used to send the receipts to the users.
+A script to verify the dvsa.noreply@1secmail.com email for the account. This is used to send the receipts to the users.
 
 - **create-inventory-data.json**
 

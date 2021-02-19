@@ -9,4 +9,4 @@ Resources:
         Ref: ApiGatewayRestApi
       Type: COGNITO_USER_POOLS
       ProviderARNs:
-        - {"Fn::GetAtt": ['CognitoUserPoolMyUserPool', Arn]}
+        - {"Fn::GetAtt": ['CognitoUserPoolDvsaUserPool', Arn]}

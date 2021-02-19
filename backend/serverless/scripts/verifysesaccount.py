@@ -1,79 +1,69 @@
-import requests
+import urllib3
 import os
 import json
 import sys
 import time
 
+HTTP = urllib3.PoolManager()
+
 def err():
 	print ("[ERR] Could not verify email account.\n")
-	print ("Make sure you've specified a region using \"aws configure\" and try again ($python backend/serverless/scripts/verifysesaccount.py), or manually browse to: https://mailsac.com/inbox/noreply.dvsa@mailsac.com and approve the email account")
+	print ("Make sure you've specified a region using \"aws configure\" and try again ($ python3 backend/serverless/scripts/verifysesaccount.py) or manualy verify email from: https://www.1secmail.com/?login=dvsa.noreply&domain=1secmail.com")
 	return False
 
-def getEmailList(email):
+def getEmailId(email):
+	latest_id = None
 	try:
-		res=requests.get("https://mailsac.com/api/addresses/{}/messages".format(email))
+		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1]))
 	except Exception as e:
 		err = "[ERR] "
 		print (err + (str(e)))
 		return False
 	
-	if res.status_code != 200:
-		return False
-
-	j = json.loads(res.text)
-	messageCount = len(j)
-
-	if not messageCount:
-		return False
-
-	id = j[messageCount-1]["_id"]
-	return id
-
-def getVerificationLink(email):
-	try:
-		res=requests.get("https://mailsac.com/inbox/{}/".format(email))
-	except Exception as e:
-		err = "[ERR] "
-		print (err + (str(e)))
-		return False
-	
-	if res.status_code != 200:
+	if req.status > 299:
 		return False
 		
-	body=res.text
-	startpoint=body.find("email address:<br><br>https://email-verification")
-	endpoint = body.find("<br><br>Your request will not be processed unless you confirm the address using this URL.")
+	msg_list = json.loads(req.data)
+	aws_msg_list = []
+	for msg in msg_list:
+		if msg["subject"].find("Email Address Verification") > -1:
+			aws_msg_list.append(msg["id"])
+	
+	return max(aws_msg_list) if len(aws_msg_list) > 0 else None
+
+
+def getVerificationLink(email, _id):
+	try:
+		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id))
+	except Exception as e:
+		err = "[ERR] "
+		print (err + (str(e)))
+		return False
+	
+	if req.status > 299:
+		return False
+		
+	body = json.loads(req.data)["body"]
+	startpoint=body.find("https://email-verification")
+	endpoint = body.find("Your request will not be processed unless you confirm the address using this URL.")
 	
 	if (startpoint == -1 or endpoint == -1):
 		return False
+	return body[startpoint:endpoint-2]
 	
-	verificationlink = body[startpoint+22:endpoint].replace("&amp;", "&")
-	return verificationlink
-	
+
 def verifyEmail(link):
 	try:
-		res = requests.get(link)
+		req = HTTP.request("GET", link)
 	except Exception as e:
 		err = "[ERR] "
 		print (err + (str(e)))
 		return False
-	if ( ("Location" in res.headers and res.headers["Location"].find("ses/verifysuccess") == -1) and res.text.find("You have successfully verified an email address") != -1 ):
-		return False
-	
-	return True
-	
-def deleteEmail(email, _id):
-	try:
-		res = requests.delete("https://mailsac.com/api/addresses/{}/messages/{}".format(email, _id))
-	except Exception as e:
-		err = "[ERR] "
-		print (err + (str(e)))
-		return False
-	
-	if res.status_code != 200:
-		return False
-	
-	return True
+	data = req.data.decode("utf-8")
+	if data.find("You have successfully verified an email address") > -1 :
+		return True
+	return False
+
 
 def verify(email):
 	print("SES Email account verification for: {}".format(email))
@@ -83,15 +73,15 @@ def verify(email):
 	time.sleep(3)
 	print (" [OK]")  
 	
-	# print("- verifying verification mail received...", end="")
-	# _id = getEmailList(email)
-	# if not _id:
-	# 	err()
-	# 	return False
-	# print (" [OK]")  
+	print("- verifying verification mail received...", end="")
+	_id = getEmailId(email)
+	if not _id:
+		err()
+		return False
+	print (" [OK]")  
 	
 	print("- getting verification link...", end="")
-	link = getVerificationLink(email)
+	link = getVerificationLink(email, _id)
 	if not link:
 		err()
 		return False
@@ -104,14 +94,8 @@ def verify(email):
 		return False
 	print (" [OK]")
 	
-	# print ("- deleting email message...", end="")
-	# deleted = deleteEmail(email, _id)
-	# if not deleted:
-	# 	print ("[-] Could not delete email... (weird, but still [OK])")
-	# print (" [OK]")
 	
 	return True
-
 
 def removeIdentities():
 	print ("Getting SES identities...", end="")
@@ -121,7 +105,7 @@ def removeIdentities():
 		j = json.loads(f.read().rstrip())
 		emails = j["Identities"]
 		for email in emails:
-			if email.startswith("dvsa.") and email.endswith("@mailsac.com"):
+			if email.startswith("dvsa.") and email.endswith("@1secmail.com"):
 				print ("Deleting SES identity: " + email),
 				os.system("aws ses delete-identity --identity {}".format(email))
 				print(" [OK]")
@@ -131,7 +115,7 @@ def main():
 	if sys.argv[1] == "--remove":
 		removeIdentities()
 	elif sys.argv[1] == "--verify":
-		sender = "dvsa.noreply@mailsac.com"
+		sender = "dvsa.noreply@1secmail.com"
 		verify(sender)
 	else:
 		sys.exit("Invalid argument [--remove, --verify]. Check your serverless.yml file.")

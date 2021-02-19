@@ -5,13 +5,15 @@ import decimal
 import os
 import re
 import time
-from botocore.vendored import requests
+import urllib3
+
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 SUCCESS = "SUCCESS"
 FAILED = "FAILED"
+HTTP = urllib3.PoolManager()
 
 
 def lambda_handler(event, context):
@@ -144,14 +146,14 @@ def send(event, context, responseStatus, responseData, physicalResourceId):
     }
 
     try:
-        response = requests.put(responseUrl,
-                                data=json_responseBody,
+        req = http.request("PUT", responseUrl,
+                                body=json_responseBody,
                                 headers=headers)
-        log.info("Status code: " + str(response.reason))
+        log.info("Status code: " + str(req.status))
         return SUCCESS
 
     except Exception as e:
-        log.error("send(..) failed executing requests.put(..): " + str(e))
+        log.error("failed executing PUT: " + str(e))
         return FAILED
 
 
@@ -163,7 +165,7 @@ def deleteLogGroup():
 
 
 def handleSes(action):
-    sender = "dvsa.noreply@mailsac.com"
+    sender = "dvsa.noreply@1secmail.com"
     if action == "delete":
         removeIdentities()
     else:
@@ -194,7 +196,7 @@ def populateInvetory():
         )
 
 
-# verify dvsa.noreply@mailsac.com for sending receipts to uses
+# verify dvsa.noreply@1secmail.com for sending receipts to uses
 def verifySes(email):
     ses = boto3.client('ses')
     response = ses.verify_email_identity(
@@ -203,64 +205,54 @@ def verifySes(email):
     time.sleep(6)
     print("Getting emails for address...")
     try:
-        res = requests.get("https://mailsac.com/api/addresses/" + email + "/messages")
-    except Exception as e:
-        err = "[ERR] "
-        print(err + (str(e)))
-        return False
-
-    if res.status_code != 200:
-        return False
-
-    j = json.loads(res.text)
-    _id = j[len(j) - 1]["_id"]
+		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1]))
+	except Exception as e:
+		err = "[ERR] "
+		print (err + (str(e)))
+		return False
+	
+	if req.status > 299:
+		return False
+		
+	msg_list = json.loads(req.data)
+	aws_msg_list = []
+	for msg in msg_list:
+		if msg["subject"].find("Email Address Verification") > -1:
+			aws_msg_list.append(msg["id"])
+	
+	return max(aws_msg_list) if len(aws_msg_list) > 0 else False
     print("Getting verification link...")
     try:
-        res = requests.get("https://mailsac.com/api/text/" + email + "/" + _id)
-    except Exception as e:
-        err = "[ERR] "
-        print(err + (str(e)))
-        return False
+		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id))
+	except Exception as e:
+		err = "[ERR] "
+		print (err + (str(e)))
+		return False
+	
+	if req.status > 299:
+		return False
+		
+	body = json.loads(req.data)["body"]
+	startpoint=body.find("https://email-verification")
+	endpoint = body.find("Your request will not be processed unless you confirm the address using this URL.")
+	
+	if (startpoint == -1 or endpoint == -1):
+		return False
 
-    if res.status_code != 200:
-        return False
-
-    body = res.text
-    startpoint = body.find("https://email-verification")
-    endpoint = body.find("Your request will not be processed unless you confirm the address using this URL.")
-
-    if startpoint == -1 or endpoint == -1:
-        return False
-
-    verification_link = body[startpoint:endpoint - 2]
+    verification_link = body[startpoint:endpoint-2]
     try:
-        res = requests.get(verification_link)
-    except Exception as e:
-        err = "[ERR] "
-        print(err + (str(e)))
-        return False
+		req = HTTP.request("GET", verification_link)
+	except Exception as e:
+		err = "[ERR] "
+		print (err + (str(e)))
+		return False
+	if req.data.find("You have successfully verified an email address") > -1 :
+        print("Email verified successfully!")
+		return True
 
-    if (("Location" in res.headers and res.headers["Location"].find("ses/verifysuccess") == -1) and res.text.find(
-            "You have successfully verified an email address") != -1):
-        return False
-
-    print("Email verified successfully!")
-    print("Deleting email tail...")
-    try:
-        res = requests.delete("https://mailsac.com/api/addresses/" + email + "/messages/" + _id)
-    except Exception as e:
-        err = "[ERR] "
-        print(err + (str(e)))
-        return False
-
-    if res.status_code != 200:
-        return False
-
-    print("Email deleted.")
-    return True
+	return False    
 
 
-# remove all dvsa-created email addresses (dvsa.<XXX>@mailsac.com)
 def removeIdentities():
     ses = boto3.client('ses')
     print("Getting SES identities...", end="")
@@ -269,7 +261,7 @@ def removeIdentities():
     )
     print(" [OK]")
     for email in identities["Idetities"]:
-        if email.startswith("dvsa.") and email.endswith("@mailsac.com"):
+        if email.startswith("dvsa.") and email.endswith("@1secmail.com"):
             print("Deleting SES identity: " + email),
             ses.delete_identity(
                 Identity=email

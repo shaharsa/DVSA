@@ -4,7 +4,6 @@ import boto3
 import os
 
 '''
-# DEMO EVENT
 {
   "userName": "<UUID>",
   "version": "1",
@@ -68,6 +67,11 @@ def lambda_handler(event, context):
             'avatar': os.environ["GENERIC_AVATAR"],
             'isAdmin': isAdmin
         }
+    )
+
+    ses = boto3.client('ses')
+    response = ses.verify_email_identity(
+      EmailAddress = email
     )
 
     if is_admin:

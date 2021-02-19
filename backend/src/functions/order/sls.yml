@@ -1,10 +1,4 @@
 
-provider:
-  name: aws
-  runtime: python3.6
-  versionFunctions: false
-  stage: dev
-  
 functions:
   OrderShipping:
     name: DVSA-ORDER-SHIPPING
@@ -24,8 +18,8 @@ functions:
     role: dvsaOrdersRole
     environment:
       ORDERS_TABLE: DVSA-ORDERS-DB
-      GET_CART_TOTAL: !Sub "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:custom.stage}/DVSA-GET-CART-TOTAL"
-      PAYMENT_PROCESS_URL: !Sub  "https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${self:custom.stage}/DVSA-PAYMENT-PROCESSOR"
+      GET_CART_TOTAL: { "Fn::Join" : ["", [ "https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.", {Ref: 'AWS::Region'}, ".amazonaws.com/${self:provider.stage}/total"]]}
+      PAYMENT_PROCESS_URL: { "Fn::Join" : ["", [ "https://", { "Ref" : "ApiGatewayRestApi" }, ".execute-api.", {Ref: 'AWS::Region'}, ".amazonaws.com/${self:provider.stage}/payment"]]}
       SQS_URL: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/dvsa-order-paid-sqs"
     timeout: 30
     memorySize: 128
@@ -120,9 +114,9 @@ resources:
                   Resource: {'Fn::Join': [':', ['arn:aws:logs', {Ref: 'AWS::Region'}, {Ref: 'AWS::AccountId'}, 'log-group:/aws/lambda/*:*:*']]}
                 - Effect: Allow
                   Action:
-                    - dynamodb:'*'
+                    - dynamodb:*
                   Resource: {'Fn::Join': [':', ['arn:aws:dynamodb', {Ref: 'AWS::Region'}, {Ref: 'AWS::AccountId'}, 'table/*']]}
                 - Effect: Allow
                   Action:
-                    - sqs:'*'
+                    - sqs:*
                   Resource: {'Fn::Join': [':', ['arn:aws:sqs', {Ref: 'AWS::Region'}, {Ref: 'AWS::AccountId'}, 'dvsa-order-paid-sqs']]}

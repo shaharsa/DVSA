@@ -1,9 +1,3 @@
-provider:
-  name: aws
-  runtime: python3.6
-  versionFunctions: false
-  stage: dev
-
 functions:
   CronProcessor:
     name: DVSA-CRON-PROCESSOR
