@@ -98,7 +98,7 @@ functions:
     package:
       include: 
         - backend/src/functions/admin/admin_orders_mysql.js
-
+        - backend/src/functions/admin/node_modules/**
 resources:
   Resources:
     dvsaAdminRole:

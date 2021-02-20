@@ -4,7 +4,7 @@
   "description": "DVSA - Damn Vulneravle SERVERLESSS Application",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i",
+    "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i && cd ../admin && npm i",
     "client:build": "cd client && npm run-script build",
     "client:start": "cd client && npm start",
     "client:start:local": "cd client && npm run-script start:local",

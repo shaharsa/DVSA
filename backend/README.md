@@ -100,7 +100,7 @@ Runs daily. Acts as a mock processing of the orders. Changes order status from p
 
 ### /order-api
 
-- **order-manager-js.js**
+- **order-manager.js**
 One NodeJS function which is tirggered by the API calls from the client. The function receives the action in the request payload and invokes the relevant function accordingly. (it is also using **vulnerable** libraries).
 
 
