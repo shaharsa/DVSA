@@ -66,28 +66,28 @@ def verifyEmail(link):
 
 
 def verify(email):
-	print("SES Email account verification for: {}".format(email))
+	print("- SES Email account verification for: {}".format(email))
 	
-	print("- requesting account verification...", end="")
+	print("-- requesting account verification...", end="")
 	os.system("aws ses verify-email-identity --email-address {}".format(email))
 	time.sleep(3)
 	print (" [OK]")  
 	
-	print("- verifying verification mail received...", end="")
+	print("-- verifying verification mail received...", end="")
 	_id = getEmailId(email)
 	if not _id:
 		err()
 		return False
 	print (" [OK]")  
 	
-	print("- getting verification link...", end="")
+	print("-- getting verification link...", end="")
 	link = getVerificationLink(email, _id)
 	if not link:
 		err()
 		return False
 	print (" [OK]")
 
-	print ("- verifying email address...", end="")
+	print ("-- verifying email address...", end="")
 	verified = verifyEmail(link)
 	if not verified:
 		err()
