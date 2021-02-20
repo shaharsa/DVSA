@@ -40,7 +40,7 @@ else
 fi
 
 echo '>>> (6/9) Installing npm dependencies...'
-#npm i
+npm i
 
 echo '>>> (7/9) Deploying backend...'
 rm -rf /tmp/dvsa.out
@@ -52,6 +52,6 @@ if grep -R "Serverless: Stack Output saved to file: ./client/src/be-stack.json" 
     npm run-script client:build
     
     echo '>>> (9/9) Deploying client...'
-    sls client deploy -yes
+    sls client deploy --no-confirm
 fi
-exit 1
+
