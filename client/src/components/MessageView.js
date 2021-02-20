@@ -72,17 +72,13 @@ export class MessageView extends React.Component {
                      <h2>Message {this.state.msgId} </h2>
                      <br/><br/>
                           <div>
-                            { base64.decode(this.state.msgData).indexOf('</') !== -1
-                                ? (
+                            { 
                                     <div dangerouslySetInnerHTML={{__html: base64.decode(this.state.msgData).replace(/(<? *script)/gi, 'illegalscript')}} >
                                     </div>
-                                  )
-                                : this.props.textOrHtml
-                              }
-
+                            }
                           </div>
                     <br/><br/>
-                    <Button type='submit' color='red' onClick={this.handleDelete}>Delete Message</Button>
+                    <Button type='submit' color='red' onClick={this.handleDelete} alt='non-functional' disabled>Delete Message</Button>
                  </div>
             </Container>
         );

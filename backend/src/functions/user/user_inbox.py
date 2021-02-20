@@ -9,41 +9,43 @@ HTTP = urllib3.PoolManager()
 
 def getEmailList(email):
     try:
-        res = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1]))
+        url = "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1])
+        res = HTTP.request("GET", url)
     except Exception as e:
         err = "[ERR] "
         print(err + (str(e)))
 
     if res.status != 200:
         return False
-    else:
-        return json.loads(res.data)
+ 
+    data = res.data
+    return json.loads(data)
 
 
 def getEmailById(email, _id, mod):
     try:
-        res = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id))
+        url = "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id)
+        res = HTTP.request("GET", url)
     except Exception as e:
         err = "[ERR] "
-        print(err + (str(e)))
+        print(err + str(e))
         return False
 
     if res.status == 200:
         data = json.loads(res.data)
-        return data[mod]
-
+        return data[mod] if len(data[mod]) > 0 else data["body"]
+          
     return False
 
 
 def lambda_handler(event, context):
-    print(json.dumps(event))
     action = event["action"]
     userId = event["user"]
 
     sts = boto3.client("sts")
     account_id = sts.get_caller_identity()["Account"]
     secmail = "dvsa.{}.{}@1secmail.com".format(account_id, ''.join(userId.split('-')))
-    print("MAIL", secmail)
+    #print("MAIL", secmail)
 
     if action == "get":
         _id = event["msgId"]
@@ -70,7 +72,7 @@ def lambda_handler(event, context):
     if action == "inbox":
         messages = []
         emails = getEmailList(secmail)
-        if not emails:
+        if not emails and not isinstance(emails, list):
             res = {"status": "err", "msg": "could not retrieve emails for: " + secmail}
             return res
 
