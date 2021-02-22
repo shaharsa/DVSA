@@ -164,8 +164,6 @@ class Pickler(object):
         self._max_iter = max_iter
         # Whether to allow decimals to pass-through
         self._use_decimal = use_decimal
-        # A cache of objects that have already been flattened.
-        self._flattened = {}
 
         if self.use_base85:
             self._bytes_tag = tags.B85
@@ -181,7 +179,6 @@ class Pickler(object):
         self._objs = {}
         self._depth = -1
         self._seen = []
-        self._flattened = {}
 
     def _push(self):
         """Steps down one level in the namespace."""
@@ -255,29 +252,21 @@ class Pickler(object):
         return self._flatten(obj)
 
     def _flatten(self, obj):
-        if self.unpicklable and self.make_refs:
-            result = self._flatten_impl(obj)
-        else:
-            try:
-                result = self._flattened[id(obj)]
-            except KeyError:
-                result = self._flattened[id(obj)] = self._flatten_impl(obj)
-        return result
 
-    def _flatten_impl(self, obj):
         #########################################
         # if obj is nonrecursive return immediately
         # for performance reasons we don't want to do recursive checks
         if PY2 and isinstance(obj, types.FileType):
             return self._flatten_file(obj)
 
-        if type(obj) is bytes:
+        if util.is_bytes(obj):
             return self._flatten_bytestring(obj)
 
+        if util.is_primitive(obj):
+            return obj
+
         # Decimal is a primitive when use_decimal is True
-        if type(obj) in util.PRIMITIVES or (
-            self._use_decimal and isinstance(obj, decimal.Decimal)
-        ):
+        if self._use_decimal and isinstance(obj, decimal.Decimal):
             return obj
         #########################################
 
@@ -319,32 +308,37 @@ class Pickler(object):
         return [self._flatten(v) for v in obj]
 
     def _get_flattener(self, obj):
-        if type(obj) in (list, dict):
+
+        list_recurse = self._list_recurse
+
+        if util.is_list(obj):
             if self._mkref(obj):
-                return (
-                    self._list_recurse if type(obj) is list else self._flatten_dict_obj
-                )
+                return list_recurse
             else:
                 self._push()
                 return self._getref
 
         # We handle tuples and sets by encoding them in a "(tuple|set)dict"
-        elif type(obj) in (tuple, set):
+        if util.is_tuple(obj):
             if not self.unpicklable:
-                return self._list_recurse
-            return lambda obj: {
-                tags.TUPLE
-                if type(obj) is tuple
-                else tags.SET: [self._flatten(v) for v in obj]
-            }
+                return list_recurse
+            return lambda obj: {tags.TUPLE: [self._flatten(v) for v in obj]}
 
-        elif util.is_object(obj):
-            return self._ref_obj_instance
+        if util.is_set(obj):
+            if not self.unpicklable:
+                return list_recurse
+            return lambda obj: {tags.SET: [self._flatten(v) for v in obj]}
 
-        elif util.is_type(obj):
+        if util.is_dictionary(obj):
+            return self._flatten_dict_obj
+
+        if util.is_type(obj):
             return _mktyperef
 
-        elif util.is_module_function(obj):
+        if util.is_object(obj):
+            return self._ref_obj_instance
+
+        if util.is_module_function(obj):
             return self._flatten_function
 
         # instance methods, lambdas, old style classes...
@@ -727,12 +721,9 @@ class Pickler(object):
 
 
 def _in_cycle(obj, objs, max_reached, make_refs):
-    """Detect cyclic structures that would lead to infinite recursion"""
     return (
-        (max_reached or (not make_refs and id(obj) in objs))
-        and not util.is_primitive(obj)
-        and not util.is_enum(obj)
-    )
+        max_reached or (not make_refs and id(obj) in objs)
+    ) and not util.is_primitive(obj)
 
 
 def _mktyperef(obj):

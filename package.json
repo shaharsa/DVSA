@@ -4,7 +4,7 @@
   "description": "DVSA - Damn Vulneravle SERVERLESSS Application",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i && cd ../admin && npm i",
+    "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i && cd ../admin && cp admin_shell.py ./admin_shell && cd admin_shell && zip -r dvsa_adminshell.zip ./",
     "client:build": "cd client && npm run-script build",
     "client:start": "cd client && npm start",
     "client:start:local": "cd client && npm run-script start:local",
@@ -29,9 +29,11 @@
   "devDependencies": {
     "serverless": "^2.25.1",
     "serverless-attach-managed-policy": "0.0.7",
+    "serverless-custom-packaging-plugin": "^0.1.2",
     "serverless-finch": "^2.6.0",
     "serverless-offline": "^6.8.0",
     "serverless-plugin-log-retention": "^2.0.0",
+    "serverless-python-requirements": "^5.1.0",
     "serverless-scriptable-plugin": "^0.8.0",
     "serverless-stack-output": "0.2.3"
   },

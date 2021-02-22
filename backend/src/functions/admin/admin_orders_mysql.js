@@ -22,7 +22,7 @@ function getOrder(user_id, order_id) {
 	connection.connect();
 	
     return new Promise(function (resolve, reject) {
-        connection.query("SELECT order from orders where orderId = '" + order_id + "' and userId = '" + user_id + "'", function (error, results, fields) {
+        connection.query("SELECT * from orders where orderId = '" + order_id + "' and userId = '" + user_id + "'", function (error, results, fields) {
           if (error) {
               connection.end();
               console.log(error);
@@ -44,13 +44,14 @@ function parseDB2JSON(result) {
 
 
 exports.handler = async (event) => {
+    let parsed_result;
     try {
         var user_id = event.body.userId;
         var order_id = event.body.orderId;
         var result = await getOrder(user_id, order_id);
         console.log("order: " + result);
 
-        const parsed_result = parseDB2JSON(result);
+        parsed_result = parseDB2JSON(result);
     }
     catch (e){
         console.log(e);
@@ -62,4 +63,3 @@ exports.handler = async (event) => {
     };
     return response;
 };
-

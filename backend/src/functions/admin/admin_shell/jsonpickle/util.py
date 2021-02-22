@@ -13,7 +13,6 @@ import base64
 import collections
 import io
 import operator
-import sys
 import time
 import types
 import inspect
@@ -36,27 +35,6 @@ if PY2:
 SEQUENCES = (list, set, tuple)
 SEQUENCES_SET = {list, set, tuple}
 PRIMITIVES = {compat.ustr, bool, type(None)} | set(numeric_types)
-FUNCTION_TYPES = {
-    types.FunctionType,
-    types.MethodType,
-    types.LambdaType,
-    types.BuiltinFunctionType,
-    types.BuiltinMethodType,
-}
-NON_REDUCIBLE_TYPES = (
-    {
-        int,
-        float,
-        list,
-        dict,
-        set,
-        tuple,
-        object,
-        bytes,
-    }
-    | PRIMITIVES
-    | FUNCTION_TYPES
-)
 
 
 def is_type(obj):
@@ -152,11 +130,6 @@ def is_primitive(obj):
     False
     """
     return type(obj) in PRIMITIVES
-
-
-def is_enum(obj):
-    """Is the object an enum?"""
-    return 'enum' in sys.modules and isinstance(obj, sys.modules['enum'].Enum)
 
 
 def is_dictionary(obj):
@@ -280,7 +253,14 @@ def is_function(obj):
     >>> is_function(1)
     False
     """
-    return type(obj) in FUNCTION_TYPES
+    function_types = (
+        types.FunctionType,
+        types.MethodType,
+        types.LambdaType,
+        types.BuiltinFunctionType,
+        types.BuiltinMethodType,
+    )
+    return type(obj) in function_types
 
 
 def is_module_function(obj):
@@ -369,10 +349,6 @@ def is_collections(obj):
         return False
 
 
-def is_reducible_sequence_subclass(obj):
-    return hasattr(obj, '__class__') and issubclass(obj.__class__, SEQUENCES)
-
-
 def is_reducible(obj):
     """
     Returns false if of a type which have special casing,
@@ -381,24 +357,25 @@ def is_reducible(obj):
     # defaultdicts may contain functions which we cannot serialise
     if is_collections(obj) and not isinstance(obj, collections.defaultdict):
         return True
-    # sets are slightly slower in this case
-    if type(obj) in NON_REDUCIBLE_TYPES:
-        return False
-    elif obj is object:
-        return False
-    elif is_list_like(obj):
-        return False
-    elif isinstance(obj, types.ModuleType):
-        return False
-    elif is_dictionary_subclass(obj):
-        return False
-    elif is_reducible_sequence_subclass(obj):
-        return False
-    elif isinstance(getattr(obj, '__slots__', None), iterator_types):
-        return False
-    elif is_type(obj) and obj.__module__ == 'datetime':
-        return False
-    return True
+    return not (
+        is_list(obj)
+        or is_list_like(obj)
+        or is_primitive(obj)
+        or is_bytes(obj)
+        or is_unicode(obj)
+        or is_dictionary(obj)
+        or is_sequence(obj)
+        or is_set(obj)
+        or is_tuple(obj)
+        or is_dictionary_subclass(obj)
+        or is_sequence_subclass(obj)
+        or is_function(obj)
+        or is_module(obj)
+        or isinstance(getattr(obj, '__slots__', None), iterator_types)
+        or type(obj) is object
+        or obj is object
+        or (is_type(obj) and obj.__module__ == 'datetime')
+    )
 
 
 def in_dict(obj, key, default=False):

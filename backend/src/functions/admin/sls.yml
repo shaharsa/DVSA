@@ -63,21 +63,20 @@ functions:
   
   AdminShell:
     name: DVSA-ADMIN-SHELL
-    handler: backend/src/functions/admin/admin_shell.lambda_handler
+    handler: admin_shell.lambda_handler
     role: dvsaAdminRole
     events:
       - http:
           method: post
           path: admin
     environment:
+      usertable: DVSA-USERS-DB
       userpoolid:
         Ref: CognitoUserPoolDvsaUserPool
     timeout: 10
     memorySize: 128
     package: 
-      include: 
-        - backend/src/functions/admin/admin_shell.py
-        - backend/src/functions/admin/jsonpickle
+      artifact: backend/src/functions/admin/admin_shell/dvsa_adminshell.zip
         
   AdminOrdersMysql:
     name: DVSA-ADMIN-ORDERS-MYSQL
