@@ -30,8 +30,6 @@ plugins:
   - serverless-plugin-log-retention
 
 custom:
-  pythonRequirements:
-    dockerizePip: true
   accountId: ${file(backend/serverless/scripts/vars.js):accountId}
   logRetentionInDays: 7
   
