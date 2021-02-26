@@ -76,7 +76,7 @@ export class Header extends Component {
                         <SearchInput products={fixProductsData(this.props.products)}/>
                     </div>
                     <Menu.Item>
-                        <img width="128px" src="https://i.imgur.com/NZWCtGA.png"/>
+                        <img src="https://i.imgur.com/p3R1bCC.png"/>
                         <h3>DVSA - Damn Vulnerable Serverless Application</h3>
                     </Menu.Item>
 

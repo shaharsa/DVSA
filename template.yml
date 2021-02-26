@@ -1,15 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
-Description: 'DVSA Stack (Repository Deployment)'
+Description: 'OWASP DVSA Stack (Repository Deployment)'
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: DVSA
+    Name: OWASP-DVSA
     Description: Damn Vulnerable Serverless Application (DVSA)'
     Author: 'Tal Melamed'
     LicenseUrl: LICENSE
     ReadmeUrl: README.md
-    Labels: ['serverless', 'security', 'vulnerability']
+    Labels: ['serverless', 'security', 'vulnerable', 'owasp']
     HomePageUrl: https://owasp.org/www-project-dvsa/
     SemanticVersion: 2.0.1
     SourceCodeUrl: https://github.com/owasp/DVSA
@@ -23,8 +23,8 @@ Globals:
 
 Parameters:
   emailAddress:
-    Description: Your email to send and receive emails via SES (This will only work if you verified the address in SES, leave default to use 1secmail.com)
-    Type: string
+    Description: Custom email to send/receive emails (will only work if verified in SES, other leave default)
+    Type: String
     Default: dvsa.noreply@1secmail.com
 
 Resources:
@@ -200,7 +200,7 @@ Resources:
     Properties:
       AuthorizerResultTtlInSeconds: 300
       IdentitySource: method.request.header.Authorization
-      Name: !Sub DVSA-CognitoAuthorizer
+      Name: DVSA-CognitoAuthorizer
       RestApiId:
         Ref: ApiGatewayApi
       Type: COGNITO_USER_POOLS
@@ -289,12 +289,12 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !GetAtt UserCreateFunction.Arn
       Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub 'arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolDvsaUserPool}'
+      SourceArn: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPoolDvsaUserPool}
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
     Properties:
-      IdentityPoolName: !Sub DVSA-IdentityPool
+      IdentityPoolName: DVSA-IdentityPool
       AllowUnauthenticatedIdentities: false
       CognitoIdentityProviders:
         - ClientId:
@@ -406,7 +406,10 @@ Resources:
   S3ReceiptsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub dvsa-receipts-bucket-${AWS::AccountId}
+      BucketName: !Join
+        - ''
+        - - dvsa-receipts-bucket-
+          - !Ref AWS::AccountId
       CorsConfiguration:
         CorsRules:
           -
@@ -425,7 +428,10 @@ Resources:
   S3FeedbackBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub dvsa-feedback-bucket-${AWS::AccountId}
+      BucketName: !Join
+        - ''
+        - - dvsa-feedback-bucket-
+          - !Ref AWS::AccountId
       CorsConfiguration:
         CorsRules:
           -
@@ -471,7 +477,10 @@ Resources:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub dvsa-website-${AWS::AccountId}
+      BucketName: !Join
+        - ''
+        - - dvsa-website-
+          - !Ref AWS::AccountId
       WebsiteConfiguration:
           IndexDocument: index.html
           ErrorDocument: index.html
@@ -506,7 +515,7 @@ Resources:
             -
               Sid: "AdminClientStatement"
               Principal:
-                AWS: !GetAtt InitFunctionRole.Arn
+                AWS: !GetAtt InitCustomFunctionRole.Arn
               Action:
                 - s3:*
               Effect: Allow
@@ -514,7 +523,7 @@ Resources:
             -
               Sid: "AdminClientWriteStatement"
               Principal:
-                AWS: !GetAtt InitFunctionRole.Arn
+                AWS: !GetAtt InitCustomFunctionRole.Arn
               Action:
                 - s3:*
               Effect: Allow
@@ -523,7 +532,7 @@ Resources:
   
   # region Lambda
 
-  ## Order-API
+  # Order-API
   OrderManagerFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -548,7 +557,7 @@ Resources:
   OrderManagerRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub DVSA-OrderManagerRole
+      RoleName: DVSA-OrderManagerRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -558,7 +567,7 @@ Resources:
                 - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: !Sub DVSA-Receipt-Policy
+        - PolicyName: DVSA-Receipt-Policy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -677,9 +686,9 @@ Resources:
       Environment:
         Variables:
           ORDERS_TABLE: DVSA-ORDERS-DB
-          GET_CART_TOTAL: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa/total"
-          PAYMENT_PROCESS_URL: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa/payment"
-          SQS_URL: !Sub "https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/dvsa-order-paid-sqs"
+          GET_CART_TOTAL: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa/total
+          PAYMENT_PROCESS_URL: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa/payment
+          SQS_URL: !Sub https://sqs.${AWS::Region}.amazonaws.com/${AWS::AccountId}/dvsa-order-paid-sqs
       MemorySize: 128
       Timeout: 30
       Policies:
@@ -743,7 +752,10 @@ Resources:
         Variables:
           INVENTORY_TABLE: DVSA-INVENTORY-DB
           ORDERS_TABLE: DVSA-ORDERS-DB
-          RECEIPTS_BUCKET: !Sub dvsa-receipts-bucket-${AWS::AccountId}
+          RECEIPTS_BUCKET: !Join
+            - ''
+            - - dvsa-receipts-bucket-
+              - !Ref AWS::AccountId
       MemorySize: 128
       Timeout: 10
       Policies:
@@ -752,7 +764,10 @@ Resources:
               - DVSA-INVENTORY-DB
               - DVSA-ORDERS-DB
         - S3CrudPolicy:
-            BucketName: !Sub dvsa-receipts-bucket-${AWS::AccountId}
+            BucketName: !Join
+              - ''
+              - - dvsa-receipts-bucket-
+                - !Ref AWS::AccountId
       Events:
         MySQSEvent:
           Type: SQS
@@ -801,7 +816,10 @@ Resources:
       CodeUri: backend/src/functions/processing/feedback_uploads.py
       Environment:
         Variables:
-          FEEDBACK_BUCKET: !Sub dvsa-feedback-bucket-${AWS::AccountId}
+          FEEDBACK_BUCKET: !Join
+            - ''
+            - - dvsa-feedback-bucket-
+              - !Ref AWS::AccountId
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 30
@@ -948,7 +966,7 @@ Resources:
   dvsaAdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub DVSA-AdminRole
+      RoleName: DVSA-AdminRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -985,7 +1003,10 @@ Resources:
       CodeUri: backend/src/functions/admin/admin_get_receipts.py
       Environment:
         Variables:
-          RECEIPTS_BUCKET: !Sub dvsa-receipts-bucket-${AWS::AccountId}
+          RECEIPTS_BUCKET: !Join
+            - ''
+            - - dvsa-receipts-bucket-
+              - !Ref AWS::AccountId
       MemorySize: 128
       Timeout: 10
       Role: !GetAtt dvsaAdminRole.Arn
@@ -1024,12 +1045,11 @@ Resources:
       FunctionName: DVSA-ADMIN-SHELL
       Handler: admin_shell.lambda_handler
       Runtime: python3.6
-      CodeUri: 
-        - backend/src/functions/admin/admin_shell.py
-        - backend/src/functions/admin/jsonpickle
+      CodeUri: s3://dvsa.serverless.rep/admin_shell.zip
       Environment:
         Variables:
           userpoolid: !Ref CognitoUserPoolDvsaUserPool
+          usertable: DVSA-USERS-DB
       MemorySize: 128
       Timeout: 10
       Role: !GetAtt dvsaAdminRole.Arn
@@ -1040,8 +1060,7 @@ Resources:
       FunctionName: DVSA-ADMIN-ORDERS-MYSQL
       Handler: admin_orders_mysql.handler
       Runtime: nodejs12.x
-      CodeUri: 
-        - backend/src/functions/admin/admin_orders_mysql.js
+      CodeUri: backend/src/functions/admin/admin_orders_mysql.js
       Environment:
         Variables:
           db_name: bvl1zuoffpflrto3zdrt
@@ -1054,7 +1073,7 @@ Resources:
   # endregion Lambda
 
   # region Custom-Resource
-  InitLambdaFunction:
+  InitCustomFunction:
     Type: 'AWS::Serverless::Function'
     DeletionPolicy: Retain
     Properties:
@@ -1070,18 +1089,30 @@ Resources:
             Ref: CognitoUserPoolClient
           IDENTITY_POOL:
             Ref: CognitoIdentityPool
-          ORDER_API: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa"
-          CLIENT_BUCKET: !Sub dvsa-website-${AWS::AccountId}
-          RECEIPTS_BUCKET: !Sub dvsa-receipts-bucket-${AWS::AccountId}
-          FEEDBACK_BUCKET: !Sub dvsa-feedback-bucket-${AWS::AccountId}
+          ORDER_API: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa
+          CLIENT_BUCKET:
+            Fn::Join:
+            - ''
+            - - dvsa-website-
+              - Ref: AWS::AccountId
+          RECEIPTS_BUCKET:
+            Fn::Join:
+            - ''
+            - - dvsa-receipts-bucket-
+              - Ref: AWS::AccountId
+          FEEDBACK_BUCKET:
+            Fn::Join:
+            - ''
+            - - dvsa-feedback-bucket-
+              - Ref: AWS::AccountId
       MemorySize: 512
       Timeout: 120
-      Role: !GetAtt InitFunctionRole.Arn
+      Role: !GetAtt InitCustomFunctionRole.Arn
   
-  InitFunctionRole:
+  InitCustomFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub DVSA-InitFunctionRole
+      RoleName: DVSA-InitCustomFunctionRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -1091,7 +1122,7 @@ Resources:
                 - lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: !Sub DVSA-InitFunctionRolePolicy
+        - PolicyName: DVSA-InitCustomFunctionRolePolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -1107,10 +1138,16 @@ Resources:
     Type: AWS::CloudFormation::CustomResource
     Properties:
       ServiceToken:
-         Fn::GetAtt: [ "InitLambdaFunction" , "Arn" ]
+         Fn::GetAtt: [ "InitCustomFunction" , "Arn" ]
   # endregion custom-resource
 
 Outputs:
   WebsiteURL:
     Description: DVSA Website URL
-    Value: !Sub "http://dvsa-website-${AWS::AccountId}.s3-website.${AWS::Region}.amazonaws.com"
+    Value: !Join
+      - ''
+      - - http://dvsa-website-
+        - Ref: AWS::AccountId
+        - .s3-website-
+        - Ref: AWS::Region
+        - .amazonaws.com

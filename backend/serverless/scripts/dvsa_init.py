@@ -22,11 +22,11 @@ def lambda_handler(event, context):
         if event['RequestType'] != 'Delete':
             with open('dist_s3/bundle.js') as f:
                 FileText = f.read()
-                FileText = re.sub("<USER_POOL_CLIENT_ID_TAG>", os.environ["USER_POOL_CLIENT_ID"], FileText)
-                FileText = re.sub("<USER_POOL_ID_TAG>", os.environ["USER_POOL_ID"], FileText)
-                FileText = re.sub("<IDENTITY_POOL_ID_TAG>", os.environ["IDENTITY_POOL"], FileText)
-                FileText = re.sub("<SERVICE_ENDPOINT_TAG>", os.environ["ORDER_API"], FileText)
-                FileText = re.sub("<DEP_BUCKET_NAME_TAG>", os.environ["CLIENT_BUCKET"], FileText)
+                FileText = re.sub("<UserPoolClientId>", os.environ["USER_POOL_CLIENT_ID"], FileText)
+                FileText = re.sub("<UserPoolId>", os.environ["USER_POOL_ID"], FileText)
+                FileText = re.sub("<IdentityPoolId>", os.environ["IDENTITY_POOL"], FileText)
+                FileText = re.sub("<ServiceEndpoint>", os.environ["ORDER_API"], FileText)
+                FileText = re.sub("<ServerlessDeploymentBucketName>", os.environ["CLIENT_BUCKET"], FileText)
 
                 with open('/tmp/bundle.js', "w") as f:
                     f.write(FileText)

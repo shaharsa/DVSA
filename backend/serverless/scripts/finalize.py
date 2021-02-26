@@ -106,7 +106,7 @@ def main():
                             "S": " "
                         },
                         "avatar": {
-                            "S": "https://i.imgur.com/NZWCtGA.png"
+                            "S": "https://i.imgur.com/p3R1bCC.png
                         },
                         "created": {
                             "N": str(int(time.time()))

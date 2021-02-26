@@ -15,6 +15,8 @@ Azure/
 backend/src/functions/admin/jsonpickle-2.0.0.dist-info/
 package-lock.json
 client/package-lock.json
-sam_packaged.yml
+packaged.yml
 backend/src/functions/admin/admin_shell/dvsa_adminshell.zip
 client/dist/
+backend/serverless/scripts/dist_s3
+sam.py
