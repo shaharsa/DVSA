@@ -11,7 +11,7 @@ Metadata:
     ReadmeUrl: README.md
     Labels: ['serverless', 'security', 'vulnerable', 'owasp']
     HomePageUrl: https://owasp.org/www-project-dvsa/
-    SemanticVersion: 2.0.1
+    SemanticVersion: 2.0.13
     SourceCodeUrl: https://github.com/owasp/DVSA
 
 Globals:
@@ -464,10 +464,7 @@ Resources:
             Resource: {'Fn::Join': ['', ['arn:aws:s3:::dvsa-feedback-bucket-', {Ref: 'AWS::AccountId'}, '/*']]}
           - Sid: "AdminListfeedbackStatement"
             Principal:
-              AWS:
-                Fn::GetAtt:
-                  - dvsaAdminRole
-                  - Arn
+              AWS: {'Fn::Join': ['', ['arn:aws:iam::', {Ref: 'AWS::AccountId'}, ':root']]}
             Action:
               - s3:*
             Effect: Allow
@@ -515,7 +512,7 @@ Resources:
             -
               Sid: "AdminClientStatement"
               Principal:
-                AWS: !GetAtt InitCustomFunctionRole.Arn
+                AWS: {'Fn::Join': ['', ['arn:aws:iam::', {Ref: 'AWS::AccountId'}, ':root']]}
               Action:
                 - s3:*
               Effect: Allow
@@ -523,7 +520,7 @@ Resources:
             -
               Sid: "AdminClientWriteStatement"
               Principal:
-                AWS: !GetAtt InitCustomFunctionRole.Arn
+                AWS: {'Fn::Join': ['', ['arn:aws:iam::', {Ref: 'AWS::AccountId'}, ':root']]}
               Action:
                 - s3:*
               Effect: Allow
@@ -546,7 +543,10 @@ Resources:
             Ref: CognitoUserPoolDvsaUserPool
       MemorySize: 128
       Timeout: 30
-      Role: !GetAtt OrderManagerRole.Arn
+      Policies:
+        - AmazonCognitoPowerUser
+        - CloudWatchLogsFullAccess
+        - AWSLambdaRole
       Events:
         OrderApi:
           Type: Api
@@ -554,32 +554,8 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: /order
             Method: POST
-  OrderManagerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: DVSA-OrderManagerRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: DVSA-Receipt-Policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:*
-                  - cognito-idp:*
-                  - logs:*
-                  - sts:*
-                Resource: "*"
 
- ## Orders
+  ## Orders
   OrderNewFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -759,15 +735,14 @@ Resources:
       MemorySize: 128
       Timeout: 10
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: 
-              - DVSA-INVENTORY-DB
-              - DVSA-ORDERS-DB
         - S3CrudPolicy:
             BucketName: !Join
               - ''
               - - dvsa-receipts-bucket-
                 - !Ref AWS::AccountId
+        - DynamoDBCrudPolicy:
+            TableName: '*'
+      
       Events:
         MySQSEvent:
           Type: SQS
@@ -790,7 +765,7 @@ Resources:
       Timeout: 10
       Policies:
         - SESCrudPolicy:
-            IdentityName: !Ref ${emailAddress}
+            IdentityName: ${emailAddress}
         - S3CrudPolicy:
             BucketName: '*'
         - DynamoDBCrudPolicy:
@@ -824,7 +799,7 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Policies:
-        - AWSLambdaFullAccess
+        - AWSLambda_FullAccess
         - AmazonSESFullAccess
       Events:
         ReceiptUpload:
@@ -847,7 +822,8 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Policies:
-        - AWSLambdaFullAccess
+        - DynamoDBCrudPolicy:
+            TableName: DVSA-ORDERS-DB
       Events:
         Timer:
           Type: Schedule
@@ -867,7 +843,8 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Policies:
-        - AWSLambdaFullAccess
+        - DynamoDBCrudPolicy:
+            TableName: DVSA-ORDERS-DB
       Events:
         Timer:
           Type: Schedule
@@ -887,7 +864,9 @@ Resources:
       MemorySize: 128
       Timeout: 30
       Policies:
-        - AWSLambdaFullAccess
+        - AWSLambdaRole
+        - DynamoDBCrudPolicy:
+            TableName: DVSA-ORDERS-DB
       Events:
         Timer:
           Type: Schedule
@@ -963,23 +942,6 @@ Resources:
         - CloudWatchLogsFullAccess
 
   ## Admin
-  dvsaAdminRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: DVSA-AdminRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - AWSLambdaFullAccess
-        - AmazonAPIGatewayInvokeFullAccess
-        - AmazonSESFullAccess
-
   AdminGetOrders:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -992,7 +954,10 @@ Resources:
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
 
   AdminGetReceiptFunction:
     Type: 'AWS::Serverless::Function'
@@ -1009,7 +974,10 @@ Resources:
               - !Ref AWS::AccountId
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
 
   AdminUpdateOrdersFunction:
     Type: 'AWS::Serverless::Function'
@@ -1023,7 +991,10 @@ Resources:
           ORDERS_TABLE: DVSA-ORDERS-DB
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
 
   AdminUpdateInventoryFunction:
     Type: 'AWS::Serverless::Function'
@@ -1037,7 +1008,10 @@ Resources:
           INVENTORY_TABLE: DVSA-INVENTORY-DB
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
 
   AdminShellFunction:
     Type: 'AWS::Serverless::Function'
@@ -1052,7 +1026,10 @@ Resources:
           usertable: DVSA-USERS-DB
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
   
   AdminOrdersMysqlFunction:
     Type: 'AWS::Serverless::Function'
@@ -1069,7 +1046,11 @@ Resources:
           db_user: uk7kkjxwjxurqudy
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt dvsaAdminRole.Arn
+      Policies:
+        - AWSLambda_FullAccess
+        - AmazonAPIGatewayInvokeFullAccess
+        - AmazonSESFullAccess
+  
   # endregion Lambda
 
   # region Custom-Resource
@@ -1090,49 +1071,25 @@ Resources:
           IDENTITY_POOL:
             Ref: CognitoIdentityPool
           ORDER_API: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/dvsa
-          CLIENT_BUCKET:
-            Fn::Join:
+          CLIENT_BUCKET: !Join
             - ''
             - - dvsa-website-
               - Ref: AWS::AccountId
-          RECEIPTS_BUCKET:
-            Fn::Join:
+          RECEIPTS_BUCKET: !Join
             - ''
             - - dvsa-receipts-bucket-
               - Ref: AWS::AccountId
-          FEEDBACK_BUCKET:
-            Fn::Join:
+          FEEDBACK_BUCKET: !Join
             - ''
             - - dvsa-feedback-bucket-
               - Ref: AWS::AccountId
       MemorySize: 512
       Timeout: 120
-      Role: !GetAtt InitCustomFunctionRole.Arn
-  
-  InitCustomFunctionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: DVSA-InitCustomFunctionRole
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
       Policies:
-        - PolicyName: DVSA-InitCustomFunctionRolePolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:*
-                  - ses:*
-                  - dynamodb:*
-                  - logs:*
-                Resource: '*'
+        - AmazonSESFullAccess
+        - AmazonDynamoDBFullAccess
+        - AmazonS3FullAccess
+        - CloudWatchLogsFullAccess
   
   InitializeApplication:
     Type: AWS::CloudFormation::CustomResource
