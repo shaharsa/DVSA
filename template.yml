@@ -11,7 +11,7 @@ Metadata:
     ReadmeUrl: README.md
     Labels: ['serverless', 'security', 'vulnerable', 'owasp']
     HomePageUrl: https://owasp.org/www-project-dvsa/
-    SemanticVersion: 2.0.13
+    SemanticVersion: 2.1.0
     SourceCodeUrl: https://github.com/owasp/DVSA
 
 Globals:
@@ -472,7 +472,6 @@ Resources:
 
   S3ClientBucket:
     Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
     Properties:
       BucketName: !Join
         - ''
@@ -529,14 +528,14 @@ Resources:
   
   # region Lambda
 
-  # Order-API
+  # Order-Manager
   OrderManagerFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
       FunctionName: DVSA-ORDER-MANAGER
       Handler: order-manager.handler
       Runtime: nodejs12.x
-      CodeUri: backend/src/functions/order-api/
+      CodeUri: backend/src/functions/order-manager/
       Environment:
         Variables:
           userpoolid:
@@ -1019,7 +1018,7 @@ Resources:
       FunctionName: DVSA-ADMIN-SHELL
       Handler: admin_shell.lambda_handler
       Runtime: python3.6
-      CodeUri: s3://dvsa.serverless.rep/admin_shell.zip
+      CodeUri: s3://dvsa.serverless.rep/AdminShellFunction.zip
       Environment:
         Variables:
           userpoolid: !Ref CognitoUserPoolDvsaUserPool

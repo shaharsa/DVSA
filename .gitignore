@@ -1,6 +1,6 @@
 .idea
 .serverless
-backend/src/functions/order-api/.serverless
+backend/src/functions/order-manager/.serverless
 client/node_modules
 node_modules
 be-stack.json
@@ -20,3 +20,5 @@ backend/src/functions/admin/admin_shell/dvsa_adminshell.zip
 client/dist/
 backend/serverless/scripts/dist_s3
 sam.py
+code_zip/
+packged.yml

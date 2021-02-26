@@ -4,7 +4,7 @@
   "description": "DVSA - Damn Vulneravle SERVERLESSS Application",
   "main": "index.js",
   "scripts": {
-    "postinstall": "cd client && npm i && cd ../backend/src/functions/order-api && npm i && cd ../admin && cp admin_shell.py ./admin_shell && cd admin_shell && zip -r dvsa_adminshell.zip ./",
+    "postinstall": "CWD=$(pwd) && mkdir -p code_zip && cd client && npm i && cd ../backend/src/functions/order-manager && npm i && cd ../admin && cp admin_shell.py ./admin_shell && cd admin_shell && zip -r ../../../../../code_zip/admin_shell.zip ./",
     "client:build": "cd client && npm run-script build",
     "client:start": "cd client && npm start",
     "client:start:local": "cd client && npm run-script start:local",

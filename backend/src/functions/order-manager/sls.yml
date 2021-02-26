@@ -2,7 +2,7 @@ functions:
   OrderManager:
     runtime: nodejs12.x
     name: DVSA-ORDER-MANAGER
-    handler: backend/src/functions/order-api/order-manager.handler
+    handler: backend/src/functions/order-manager/order-manager.handler
     role: DVSAOrderAPIRole
     timeout: 30
     memorySize: 128
@@ -19,8 +19,8 @@ functions:
       exclude:
         - ./**
       include:
-        - backend/src/functions/order-api/*.js
-        - backend/src/functions/order-api/node_modules/**
+        - backend/src/functions/order-manager/*.js
+        - backend/src/functions/order-manager/node_modules/**
 
 resources:
   Resources:

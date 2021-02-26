@@ -76,7 +76,7 @@ functions:
     timeout: 10
     memorySize: 128
     package: 
-      artifact: backend/src/functions/admin/admin_shell/dvsa_adminshell.zip
+      artifact: code_zip/admin_shell.zip
         
   AdminOrdersMysql:
     name: DVSA-ADMIN-ORDERS-MYSQL

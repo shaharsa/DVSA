@@ -47,6 +47,7 @@ fi
 echo '>>> (6/9) Installing dependencies...'
 npm i
 
+
 echo '>>> (7/9) Deploying backend...'
 rm -rf /tmp/dvsa.out
 sls deploy | tee /tmp/dvsa.out;

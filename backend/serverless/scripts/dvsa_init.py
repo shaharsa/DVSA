@@ -17,7 +17,7 @@ HTTP = urllib3.PoolManager()
 
 
 def lambda_handler(event, context):
-    print("event------------- ", event)
+    print(json.dumps(event))
     try:
         if event['RequestType'] != 'Delete':
             with open('dist_s3/bundle.js') as f:
@@ -204,12 +204,12 @@ def verifySes(email):
     )
     time.sleep(6)
     print("Getting emails for address...")
+    url = "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1])
     try:
-		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=getMessages&login={}&domain={}".format(email.split("@")[0], email.split("@")[1]))
-	except Exception as e:
-		err = "[ERR] "
-		print (err + (str(e)))
-		return False
+        req = HTTP.request("GET", url)
+    except Exception as e:
+        print(e)
+        return False
 	
 	if req.status > 299:
 		return False
@@ -222,12 +222,12 @@ def verifySes(email):
 	
 	return max(aws_msg_list) if len(aws_msg_list) > 0 else False
     print("Getting verification link...")
+    url = "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id)
     try:
-		req = HTTP.request("GET", "https://www.1secmail.com/api/v1/?action=readMessage&login={}&domain={}&id={}".format(email.split("@")[0], email.split("@")[1], _id))
+		req = HTTP.request("GET", url)
 	except Exception as e:
-		err = "[ERR] "
-		print (err + (str(e)))
-		return False
+        print(e)
+        return False
 	
 	if req.status > 299:
 		return False

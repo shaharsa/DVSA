@@ -48,7 +48,7 @@ custom:
     after:remove:remove:     python3 backend/serverless/scripts/verifysesaccount.py --remove
 
 functions:
-  - ${file(backend/src/functions/order-api/sls.yml):functions}
+  - ${file(backend/src/functions/order-manager/sls.yml):functions}
   - ${file(backend/src/functions/order/sls.yml):functions}
   - ${file(backend/src/functions/processing/sls.yml):functions}
   - ${file(backend/src/functions/admin/sls.yml):functions}
@@ -64,7 +64,7 @@ resources:
   - ${file(backend/serverless/resources/s3-buckets.yml)}
 
   # Function Resources
-  - ${file(backend/src/functions/order-api/sls.yml):resources}
+  - ${file(backend/src/functions/order-manager/sls.yml):resources}
   - ${file(backend/src/functions/processing/sls.yml):resources}
   - ${file(backend/src/functions/order/sls.yml):resources}
   - ${file(backend/src/functions/admin/sls.yml):resources}
