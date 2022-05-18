@@ -519,6 +519,12 @@ Resources:
               - DELETE
               - HEAD
             MaxAge: 3000
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
 
   S3FeedbackBucketPermissions:
     Type: AWS::S3::BucketPolicy
