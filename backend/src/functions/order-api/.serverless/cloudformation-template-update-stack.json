@@ -3,6 +3,14 @@
   "Description": "The AWS CloudFormation template for this Serverless application",
   "Resources": {
     "ServerlessDeploymentBucket": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "key",
+            "Value": "value"
+          }
+        ]
+      },
       "Type": "AWS::S3::Bucket"
     },
     "OrderManagerLogGroup": {
@@ -14,6 +22,12 @@
     "OrderManagerLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
+        "Tags": [
+          {
+            "Key": "key",
+            "Value": "value"
+          }
+        ],
         "Code": {
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
@@ -39,6 +53,12 @@
     "ApiGatewayRestApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
+        "Tags": [
+          {
+            "Key": "key",
+            "Value": "value"
+          }
+        ],
         "Name": "dev-dvsa",
         "EndpointConfiguration": {
           "Types": [
